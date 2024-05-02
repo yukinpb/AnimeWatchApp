@@ -120,7 +120,7 @@ class AnimeStreamActivity : AppCompatActivity() {
         binding.btnReconnect.setOnClickListener {
             if(Utils.isNetworkAvailable(this)) {
                 if(!viewModel.animeUiState.value.isPlaying) {
-                    getAnimeStreamLink()
+                    playAnime()
                 }
                 else {
                     viewModel.player.play()
@@ -150,7 +150,7 @@ class AnimeStreamActivity : AppCompatActivity() {
                 viewModel.player.pause()
                 animeStream.animeEpisode++
                 updateAllTitle()
-                getAnimeStreamLink()
+                playAnime()
             }
             else {
                 Toast.makeText(this, "No more episodes", Toast.LENGTH_SHORT).show()
@@ -162,7 +162,7 @@ class AnimeStreamActivity : AppCompatActivity() {
                 viewModel.player.pause()
                 animeStream.animeEpisode--
                 updateAllTitle()
-                getAnimeStreamLink()
+                playAnime()
             }
             else {
                 Toast.makeText(this, "No previous episodes", Toast.LENGTH_SHORT).show()
@@ -178,7 +178,7 @@ class AnimeStreamActivity : AppCompatActivity() {
                         viewModel.player.pause()
                         animeStream.animeEpisode++
                         updateAllTitle()
-                        getAnimeStreamLink()
+                        playAnime()
                     }
                     else {
                         Toast.makeText(this@AnimeStreamActivity, "No more episodes", Toast.LENGTH_SHORT).show()
@@ -227,7 +227,7 @@ class AnimeStreamActivity : AppCompatActivity() {
         playerControlView = binding.animePlayerView.findViewById(androidx.media3.ui.R.id.exo_controller)
 
         if(!viewModel.animeUiState.value.isPlaying) {
-            getAnimeStreamLink()
+            playAnime()
         }
         else {
             viewModel.player.play()
@@ -242,8 +242,9 @@ class AnimeStreamActivity : AppCompatActivity() {
             animeDownload = intent.extras?.getSerializable("animeDownload") as AnimeDownload
     }
 
-    private fun getAnimeStreamLink() {
+    private fun playAnime() {
         viewModel.getAnimeStreamLink(animeStream.animeLink, animeStream.animeEpisode)
+        saveHistory()
     }
 
     private fun checkHasNextEpisode(): Boolean {
@@ -319,7 +320,7 @@ class AnimeStreamActivity : AppCompatActivity() {
                     animeStream.animeEpisode = it
                     viewModel.player.pause()
                     updateAllTitle()
-                    getAnimeStreamLink()
+                    playAnime()
                     dialog.dismiss()
                 }
                 return true
@@ -332,7 +333,7 @@ class AnimeStreamActivity : AppCompatActivity() {
                 animeStream.animeEpisode = it
                 viewModel.player.pause()
                 updateAllTitle()
-                getAnimeStreamLink()
+                playAnime()
                 dialog.dismiss()
             }
         }
@@ -343,7 +344,7 @@ class AnimeStreamActivity : AppCompatActivity() {
                 animeStream.animeEpisode = it
                 viewModel.player.pause()
                 updateAllTitle()
-                getAnimeStreamLink()
+                playAnime()
                 dialog.dismiss()
             }
         }
@@ -366,23 +367,10 @@ class AnimeStreamActivity : AppCompatActivity() {
         returnIntent.putExtra("episode", animeStream.animeEpisode)
         setResult(Activity.RESULT_OK, returnIntent)
 
-        if(viewModel.animeUiState.value.isInHistory) {
-            viewModel.updateHistoryAnime(animeStream.animeLink, animeStream.animeEpisode)
-        }
-        else {
-            val anime = Anime(
-                animeName = animeStream.animeName,
-                animeImageURL = animeStream.animeImageURL,
-                animeLink = animeStream.animeLink
-            )
-            viewModel.addHistoryAnime(anime, animeStream.animeEpisode)
-        }
-
         finish()
     }
 
-    override fun onDestroy() {
-        Log.d("AnimeStreamActivity", "onDestroy")
+    private fun saveHistory() {
         if(viewModel.animeUiState.value.isInHistory) {
             viewModel.updateHistoryAnime(animeStream.animeLink, animeStream.animeEpisode)
         }
@@ -394,7 +382,6 @@ class AnimeStreamActivity : AppCompatActivity() {
             )
             viewModel.addHistoryAnime(anime, animeStream.animeEpisode)
         }
-        super.onDestroy()
     }
 
     override fun onStop() {
