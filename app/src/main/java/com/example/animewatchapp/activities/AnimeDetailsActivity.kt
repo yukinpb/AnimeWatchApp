@@ -41,6 +41,7 @@ import com.example.animewatchapp.databinding.ItemEpisodeDownloadBinding
 import com.example.animewatchapp.model.Anime
 import com.example.animewatchapp.model.AnimeDownload
 import com.example.animewatchapp.model.AnimeStream
+import com.example.animewatchapp.utils.OUTPUT_PATH
 import com.example.animewatchapp.viewmodels.AnimeDetailsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -361,11 +362,11 @@ class AnimeDetailsActivity : AppCompatActivity() {
     }
 
     private fun checkCanDownload(episode: Int): Boolean {
-        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val downloadDir = File(applicationContext.filesDir, OUTPUT_PATH)
         val str = anime.animeLink
         val parts = str.split("/")
         val nameAnime = parts[parts.size - 2]
-        val outputFilePath = "${downloadDir.absolutePath}/AnimeWatch/$nameAnime-$episode.mp4"
+        val outputFilePath = "${downloadDir.absolutePath}/$nameAnime-$episode.mp4"
         val file = File(outputFilePath)
         return !file.exists()
     }
@@ -414,7 +415,7 @@ class AnimeDetailsActivity : AppCompatActivity() {
             Log.d("DownloadVideo", "Downloading video from $videoLink")
 //            val command = arrayOf("-i", videoLink, "-c", "copy", "-y", outputPath)
 //            val command = arrayOf("-y", "-i", videoLink, "-c:v", "mpeg4", "-q:v", "23", "-threads", "64", "-c:a", "aac", "-q:a", "100", outputPath)
-            val command = arrayOf("-y", "-i", videoLink, "-c:v", "libx264", "-preset", "ultrafast", "-crf", "30", "-threads", "64", "-c:a", "aac", "-b:a", "128k", outputPath)
+            val command = arrayOf("-y", "-i", videoLink, "-c:v", "libx264", "-preset", "ultrafast", "-crf", "30", "-threads", "4", "-c:a", "aac", "-b:a", "128k", outputPath)
             val rc = FFmpeg.execute(command)
 
 
@@ -431,16 +432,14 @@ class AnimeDetailsActivity : AppCompatActivity() {
     private fun downloadAnime(episode: Int, binding: ItemEpisodeDownloadBinding) {
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                val dirPath = "${downloadDir.absolutePath}/AnimeWatch"
-                val dir = File(dirPath)
-                if (!dir.exists()) {
-                    dir.mkdirs()
+                val downloadDir = File(applicationContext.filesDir, OUTPUT_PATH)
+                if (!downloadDir.exists()) {
+                    downloadDir.mkdirs()
                 }
                 val str = anime.animeLink
                 val parts = str.split("/")
                 val nameAnime = parts[parts.size - 2]
-                val outputFilePath = "$dirPath/$nameAnime-$episode.mp4"
+                val outputFilePath = "${downloadDir.absolutePath}/$nameAnime-$episode.mp4"
                 val animeStreamUrl = viewModel.getAnimeStreamLink(anime.animeLink, episode)
                 val result = downloadVideo(episode, animeStreamUrl, outputFilePath, binding.episodeDownloadProgress)
 
@@ -483,7 +482,7 @@ class AnimeDetailsActivity : AppCompatActivity() {
             if(!initNotificationBuilder) {
                 builderNotification = NotificationCompat.Builder(this, CHANNEL_ID).apply {
                     setContentTitle("Download")
-                    setContentText("Download anime ${anime.animeName} episode $currentEpisodeDownload")
+                    setStyle(NotificationCompat.BigTextStyle().bigText("Download anime ${anime.animeName} episode $currentEpisodeDownload"))
                     setSmallIcon(R.drawable.ic_download)
                     setProgress(100, progress, false)
                     priority = NotificationCompat.PRIORITY_LOW
@@ -519,7 +518,7 @@ class AnimeDetailsActivity : AppCompatActivity() {
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID).apply {
             setContentTitle("Download Failed")
-            setContentText("Download of anime ${anime.animeName} episode $currentEpisodeDownload failed.")
+            setStyle(NotificationCompat.BigTextStyle().bigText("Download of anime ${anime.animeName} episode $currentEpisodeDownload failed."))
             setSmallIcon(R.drawable.ic_download)
             priority = NotificationCompat.PRIORITY_LOW
         }
@@ -550,7 +549,7 @@ class AnimeDetailsActivity : AppCompatActivity() {
     private fun showDownloadSuccessNotification() {
         val builder = NotificationCompat.Builder(this, CHANNEL_ID).apply {
             setContentTitle("Download Success")
-            setContentText("Download of anime ${anime.animeName} episode $currentEpisodeDownload success.")
+            setStyle(NotificationCompat.BigTextStyle().bigText("Download of anime ${anime.animeName} episode $currentEpisodeDownload success."))
             setSmallIcon(R.drawable.ic_download)
             priority = NotificationCompat.PRIORITY_LOW
         }

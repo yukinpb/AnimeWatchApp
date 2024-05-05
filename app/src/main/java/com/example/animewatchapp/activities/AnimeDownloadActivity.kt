@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -29,6 +30,7 @@ import com.example.animewatchapp.adapter.AnimeDownloadAdapter
 import com.example.animewatchapp.databinding.ActivityAnimeDownloadBinding
 import com.example.animewatchapp.databinding.CustomAlertDialogBinding
 import com.example.animewatchapp.model.AnimeDownload
+import com.example.animewatchapp.utils.OUTPUT_PATH
 import com.example.animewatchapp.viewmodels.DownloadViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -177,12 +179,15 @@ class AnimeDownloadActivity : AppCompatActivity() {
     }
 
     private fun deleteAllAnime() {
-        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val animeWatchDir = File("${downloadDir.absolutePath}/AnimeWatch")
+        val downloadDir = File(applicationContext.filesDir, OUTPUT_PATH)
 
-        if (animeWatchDir.exists() && animeWatchDir.isDirectory) {
-            val files = animeWatchDir.listFiles()
+        Log.d("AnimeDownloadActivity", "deleteAllAnime: $downloadDir")
+
+        if (downloadDir.exists() && downloadDir.isDirectory) {
+            val files = downloadDir.listFiles()
+
             if (files != null) {
+                Log.d("AnimeDownloadActivity", "deleteAllAnime: ${files.size}")
                 for (file in files) {
                     val deleted = file.delete()
                     if (!deleted) {
@@ -190,6 +195,9 @@ class AnimeDownloadActivity : AppCompatActivity() {
                     }
                 }
             }
+        }
+        else {
+            Toast.makeText(this, "Anime watch dir not found", Toast.LENGTH_SHORT).show()
         }
     }
 
